@@ -76,5 +76,34 @@ class CPU:
         print()
 
     def run(self):
-        """Run the CPU."""
-        pass
+        # start the program
+        running = True
+
+        while running:
+            # get the next instruction into instruction register
+            ir = self.ram_read(self.pc)
+
+            # store the next two instruction as possibly needed variables
+            operand_a = self.ram_read(self.pc + 1)
+            operand_b = self.ram_read(self.pc + 2)
+
+            # LDI: save the value into the register
+            if ir == 0b10000010:
+                self.reg[operand_a] = operand_b
+                self.pc += 3
+
+            # PRN: print the value from register
+            elif ir == 0b01000111:
+                print(self.reg[operand_a])
+                self.pc += 2
+
+            # HLT: halt the program
+            elif ir == 0b00000001:
+                running = False
+                self.pc += 1
+
+            # if command is not recognized
+            else:
+                print(f'Unknown instruction register: {ir}')
+                # system crash
+                sys.exit(1)
