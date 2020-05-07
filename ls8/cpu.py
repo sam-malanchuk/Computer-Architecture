@@ -41,7 +41,7 @@ class CPU:
                 # strip empty or hashes from program
                 line = line.split('#',1)[0].strip()
                 # add the line to the ram
-                self.ram[address] = line
+                self.ram[address] = int(f'0b{line}', 2)
                 # up the address variable for next loop
                 address += 1
 
@@ -99,6 +99,7 @@ class CPU:
         ldi = 0b10000010
         prn = 0b01000111
         hlt = 0b00000001
+        mul = 0b10100010
 
         while running:
             # get the next instruction into instruction register
@@ -109,17 +110,22 @@ class CPU:
             operand_b = self.ram_read(self.pc + 2)
 
             # LDI: save the value into the register
-            if ir == ldi:
+            if ir == 0b10000010:
                 self.reg[operand_a] = operand_b
                 self.pc += 3
 
             # PRN: print the value from register
-            elif ir == prn:
+            elif ir == 0b01000111:
                 print(self.reg[operand_a])
                 self.pc += 2
 
+            # MUL: get the product of the two register values specified, save in the first
+            elif ir == 0b10100010:
+                self.reg[operand_a] = self.reg[operand_a] * self.reg[operand_b]
+                self.pc += 3
+
             # HLT: halt the program
-            elif ir == hlt:
+            elif ir == 0b00000001:
                 running = False
                 self.pc += 1
 
