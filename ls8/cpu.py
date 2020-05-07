@@ -11,7 +11,19 @@ class CPU:
         self.ram = [0] * 256
         # initiate the program counter
         self.pc = 0
-        
+        # initiate the registery to take 8 bits
+        self.reg = [0] * 8
+
+    # method to return a memory value at a specific address
+    def ram_read(self, mar):
+        return self.ram[mar]
+
+    # method to write a memory value at a specific address
+    def ram_write(self, mar, mdr):
+        self.ram[mar] = mdr
+        # return True
+        return 0b00000001
+
     def load(self):
         """Load a program into memory."""
 
