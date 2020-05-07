@@ -65,6 +65,10 @@ but you'll have to implement those three above instructions first!
 * Read this whole file.
 * Skim the spec.
 
+### Files List:
+* cpu.py  - CPU class, methods to load programs and runs operations
+* ls8.py  - creates the CPU class and hands it the program, then runs it
+
 ## Step 1: Add the constructor to `cpu.py`
 
 Add list properties to the `CPU` class to hold 256 bytes of memory and 8

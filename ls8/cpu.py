@@ -7,28 +7,59 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        # initiate the RAM capable of holding 256 bytes 
+        self.ram = [0] * 256
+        # initiate the program counter
+        self.pc = 0
+        # initiate the registery to take 8 bits
+        self.reg = [0] * 8
+
+    # method to return a memory value at a specific address
+    def ram_read(self, mar):
+        return self.ram[mar]
+
+    # method to write a memory value at a specific address
+    def ram_write(self, mar, mdr):
+        self.ram[mar] = mdr
+        # return True
+        return 0b00000001
 
     def load(self):
         """Load a program into memory."""
 
         address = 0
 
-        # For now, we've just hardcoded a program:
+        # if there is an extra system variable
+        if len(sys.argv) > 1:
+            # load in the file at specified address
+            program_file = sys.argv[1]
+            # read the file from path
+            program = open(program_file, "r")
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+            # for every line in the file
+            for line in program:
+                # strip empty or hashes from program
+                line = line.split('#',1)[0].strip()
+                # add the line to the ram
+                self.ram[address] = int(f'0b{line}', 2)
+                # up the address variable for next loop
+                address += 1
 
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        # otherwise, demo the default program
+        else:
+            program = [
+                # From print8.ls8
+                0b10000010, # LDI R0,8
+                0b00000000,
+                0b00001000,
+                0b01000111, # PRN R0
+                0b00000000,
+                0b00000001, # HLT
+            ]
+
+            for instruction in program:
+                self.ram[address] = instruction
+                address += 1
 
 
     def alu(self, op, reg_a, reg_b):
@@ -61,5 +92,45 @@ class CPU:
         print()
 
     def run(self):
-        """Run the CPU."""
-        pass
+        # start the program
+        running = True
+
+        # set instruction codes
+        ldi = 0b10000010
+        prn = 0b01000111
+        hlt = 0b00000001
+        mul = 0b10100010
+
+        while running:
+            # get the next instruction into instruction register
+            ir = self.ram_read(self.pc)
+
+            # store the next two instruction as possibly needed variables
+            operand_a = self.ram_read(self.pc + 1)
+            operand_b = self.ram_read(self.pc + 2)
+
+            # LDI: save the value into the register
+            if ir == 0b10000010:
+                self.reg[operand_a] = operand_b
+                self.pc += 3
+
+            # PRN: print the value from register
+            elif ir == 0b01000111:
+                print(self.reg[operand_a])
+                self.pc += 2
+
+            # MUL: get the product of the two register values specified, save in the first
+            elif ir == 0b10100010:
+                self.reg[operand_a] = self.reg[operand_a] * self.reg[operand_b]
+                self.pc += 3
+
+            # HLT: halt the program
+            elif ir == 0b00000001:
+                running = False
+                self.pc += 1
+
+            # if command is not recognized
+            else:
+                print(f'Unknown instruction register: {ir}')
+                # system crash
+                sys.exit(1)
