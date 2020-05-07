@@ -79,6 +79,11 @@ class CPU:
         # start the program
         running = True
 
+        # set instruction codes
+        ldi = 0b10000010
+        prn = 0b01000111
+        hlt = 0b00000001
+
         while running:
             # get the next instruction into instruction register
             ir = self.ram_read(self.pc)
@@ -88,17 +93,17 @@ class CPU:
             operand_b = self.ram_read(self.pc + 2)
 
             # LDI: save the value into the register
-            if ir == 0b10000010:
+            if ir == ldi:
                 self.reg[operand_a] = operand_b
                 self.pc += 3
 
             # PRN: print the value from register
-            elif ir == 0b01000111:
+            elif ir == prn:
                 print(self.reg[operand_a])
                 self.pc += 2
 
             # HLT: halt the program
-            elif ir == 0b00000001:
+            elif ir == hlt:
                 running = False
                 self.pc += 1
 
