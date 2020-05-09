@@ -67,7 +67,12 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == "SUB":
+            self.reg[reg_a] -= self.reg[reg_b]
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
+        elif op == "DIV":
+            self.reg[reg_a] = self.reg[reg_a] / self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -121,7 +126,7 @@ class CPU:
 
             # MUL: get the product of the two register values specified, save in the first
             elif ir == 0b10100010:
-                self.reg[operand_a] = self.reg[operand_a] * self.reg[operand_b]
+                self.alu("MUL", operand_a, operand_b)
                 self.pc += 3
 
             # HLT: halt the program
