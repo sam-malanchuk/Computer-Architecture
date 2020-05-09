@@ -115,22 +115,22 @@ class CPU:
             operand_b = self.ram_read(self.pc + 2)
 
             # LDI: save the value into the register
-            if ir == 0b10000010:
+            if ir == ldi:
                 self.reg[operand_a] = operand_b
                 self.pc += 3
 
             # PRN: print the value from register
-            elif ir == 0b01000111:
+            elif ir == prn:
                 print(self.reg[operand_a])
                 self.pc += 2
 
             # MUL: get the product of the two register values specified, save in the first
-            elif ir == 0b10100010:
+            elif ir == mul:
                 self.alu("MUL", operand_a, operand_b)
                 self.pc += 3
 
             # HLT: halt the program
-            elif ir == 0b00000001:
+            elif ir == hlt:
                 running = False
                 self.pc += 1
 
