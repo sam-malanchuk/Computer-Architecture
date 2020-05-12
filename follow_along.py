@@ -7,24 +7,11 @@ PRINT_NUM      = 3
 SAVE           = 4
 PRINT_REGISTER = 5
 ADD            = 6
-
-print_some_nums = [
-    SAVE,
-    12,
-    1,
-    SAVE,
-    45,
-    2,
-    ADD,
-    1,
-    2,
-    PRINT_REGISTER,
-    1,
-    HALT,
-]
+POP            = 7
+PUSH           = 8
 
 # create the memory
-memory = print_some_nums
+memory = [0] * 256
 
 # computer is running
 running = True
@@ -34,6 +21,38 @@ pc = 0
 
 # create a register
 registers = [0] * 8
+SP = 7 # register location that holds top of stack address
+# store top of memory into Register 7
+registers[SP] = len(memory) -1
+
+# Read from file, and load into memory
+# read the filename from command line arguments
+# open the file, and load each line into memory
+# lets try not to crash
+def load_program_into_memory():
+    address = 0
+    # get the filename from arguments here
+    print(sys.argv)
+    if len(sys.argv) != 2:
+        print("Need proper file name passed")
+        sys.exit(1)
+
+    filename = sys.argv[1]
+    with open(filename) as f:
+        for line in f:
+            # print(line)
+            if line == '':
+                continue
+            comment_split = line.split('#')
+            # print(comment_split) # [everything before #, everything after #]
+
+            num = comment_split[0].strip()
+
+            memory[address] = int(num)
+            address += 1
+
+load_program_into_memory()
+
 # running while loop
 while running:
     # memory pointer
@@ -79,6 +98,30 @@ while running:
         # add the two values together
         registers[register1] = registers[register1] + registers[register2]
         pc += 3
+
+    elif command == PUSH:
+        # PUSH
+        # rrrrr
+        # PUSH register value to the stack
+        register = memory[pc + 1]
+        # decrement the Stack Pointer (SP)
+        registers[SP] -= 1
+        # read the next value for register location
+        register_value = registers[register]
+        # take the value in that register and add to stack
+        memory[registers[SP]] = register_value
+        pc += 2
+
+    elif command == POP:
+        # POP Rrrrrrrrr
+        # POP value of stack at location SP
+        value = memory[registers[SP]]
+        register = memory[pc + 1]
+        # store the value in register given
+        registers[register] = value
+        # increment the Stack Pointer (SP)
+        registers[SP] += 1
+        pc += 2
 
     else:
         # if command is not recognized
