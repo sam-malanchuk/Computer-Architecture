@@ -7,6 +7,8 @@ ldi = 0b10000010
 prn = 0b01000111
 hlt = 0b00000001
 mul = 0b10100010
+pop = 0b01000110
+push = 0b01000101
 
 class CPU:
     """Main CPU class."""
@@ -19,12 +21,18 @@ class CPU:
         self.pc = 0
         # initiate the registery to take 8 bits
         self.reg = [0] * 8
+        # reserve Registry 7 for Stack Address pointer
+        self.sp = 7
+        # start of Stack per spec
+        self.reg[self.sp] = len(self.ram) - 12
         # initiate a branch table
         self.branchTable = {}
         self.branchTable[ldi] = self.handle_ldi
         self.branchTable[prn] = self.handle_prn
         self.branchTable[hlt] = self.handle_hlt
         self.branchTable[mul] = self.handle_mul
+        self.branchTable[pop] = self.handle_pop
+        self.branchTable[push] = self.handle_push
         # set CPU running
         self.running = False
 
@@ -130,6 +138,26 @@ class CPU:
         self.running = False
         self.pc += 1
 
+    # PUSH: get the value out of memory and into the stack
+    def handle_push(self, operand_a, operand_b):
+        # decrement the Stack Pointer (SP)
+        self.reg[self.sp] -= 1
+        # read the next value for register location
+        register_value = self.reg[operand_a]
+        # take the value in that register and add to stack
+        self.ram_write(self.reg[self.sp], register_value)
+        self.pc += 2
+
+    # POP: get the value out of stack into memory
+    def handle_pop(self, operand_a, operand_b):
+        # POP value of stack at location SP
+        value = self.ram_read(self.reg[self.sp])
+        # store the value in register given
+        self.reg[operand_a] = value
+        # increment the Stack Pointer (SP)
+        self.reg[self.sp] += 1
+        self.pc += 2        
+
     def run(self):
         # start the program
         self.running = True
@@ -142,4 +170,5 @@ class CPU:
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
 
+            # run the next instruction from the dispatch table
             self.branchTable[ir](operand_a, operand_b)
