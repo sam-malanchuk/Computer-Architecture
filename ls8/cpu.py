@@ -2,6 +2,12 @@
 
 import sys
 
+# function dispatch table
+ldi = 0b10000010
+prn = 0b01000111
+hlt = 0b00000001
+mul = 0b10100010
+
 class CPU:
     """Main CPU class."""
 
@@ -13,6 +19,14 @@ class CPU:
         self.pc = 0
         # initiate the registery to take 8 bits
         self.reg = [0] * 8
+        # initiate a branch table
+        self.branchTable = {}
+        self.branchTable[ldi] = self.handle_ldi
+        self.branchTable[prn] = self.handle_prn
+        self.branchTable[hlt] = self.handle_hlt
+        self.branchTable[mul] = self.handle_mul
+        # set CPU running
+        self.running = False
 
     # method to return a memory value at a specific address
     def ram_read(self, mar):
@@ -72,7 +86,7 @@ class CPU:
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == "DIV":
-            self.reg[reg_a] = self.reg[reg_a] / self.reg[reg_b]
+            self.reg[reg_a] /= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -96,17 +110,31 @@ class CPU:
 
         print()
 
+    # LDI: save the value into the register
+    def handle_ldi(self, operand_a, operand_b):
+        self.reg[operand_a] = operand_b
+        self.pc += 3
+
+    # PRN: print the value from register
+    def handle_prn(self, operand_a, operand_b):
+        print(self.reg[operand_a])
+        self.pc += 2
+
+    # MUL: get the product of the two register values specified, save in the first
+    def handle_mul(self, operand_a, operand_b):
+        self.alu("MUL", operand_a, operand_b)
+        self.pc += 3
+
+    # HLT: halt the program
+    def handle_hlt(self, operand_a, operand_b):
+        self.running = False
+        self.pc += 1
+
     def run(self):
         # start the program
-        running = True
+        self.running = True
 
-        # set instruction codes
-        ldi = 0b10000010
-        prn = 0b01000111
-        hlt = 0b00000001
-        mul = 0b10100010
-
-        while running:
+        while self.running:
             # get the next instruction into instruction register
             ir = self.ram_read(self.pc)
 
@@ -114,28 +142,4 @@ class CPU:
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
 
-            # LDI: save the value into the register
-            if ir == ldi:
-                self.reg[operand_a] = operand_b
-                self.pc += 3
-
-            # PRN: print the value from register
-            elif ir == prn:
-                print(self.reg[operand_a])
-                self.pc += 2
-
-            # MUL: get the product of the two register values specified, save in the first
-            elif ir == mul:
-                self.alu("MUL", operand_a, operand_b)
-                self.pc += 3
-
-            # HLT: halt the program
-            elif ir == hlt:
-                running = False
-                self.pc += 1
-
-            # if command is not recognized
-            else:
-                print(f'Unknown instruction register: {ir}')
-                # system crash
-                sys.exit(1)
+            self.branchTable[ir](operand_a, operand_b)
