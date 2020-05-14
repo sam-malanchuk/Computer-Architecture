@@ -9,6 +9,8 @@ PRINT_REGISTER = 5
 ADD            = 6
 POP            = 7
 PUSH           = 8
+CALL           = 9
+RET            = 10
 
 # create the memory
 memory = [0] * 256
@@ -41,13 +43,13 @@ def load_program_into_memory():
     with open(filename) as f:
         for line in f:
             # print(line)
-            if line == '':
-                continue
             comment_split = line.split('#')
-            # print(comment_split) # [everything before #, everything after #]
+            if comment_split[0] == '' or comment_split[0] == '\n':
+                continue
 
             num = comment_split[0].strip()
 
+            # print(f'what\'s up with: {num}')
             memory[address] = int(num)
             address += 1
 
@@ -122,6 +124,25 @@ while running:
         # increment the Stack Pointer (SP)
         registers[SP] += 1
         pc += 2
+
+    elif command == CALL:
+        # store the next line to execute onto the stack
+        # this will be the line we will return to after our subroutine
+        registers[SP] -= 1
+        memory[registers[SP]] = pc + 2
+        # read which register stores our next line passed with CALL
+        register = memory[pc + 1]
+        # set the PC to the value in that register
+        pc = registers[register]
+
+    elif command == RET:
+        # pop the current value from the stack
+        # this SHOULD be the return address
+        return_address = memory[registers[SP]]
+        # Increment the stack pointer (move back up the stack)
+        registers[SP] += 1
+        # Set the PC to that value
+        pc = return_address
 
     else:
         # if command is not recognized
