@@ -2,14 +2,6 @@
 
 import sys
 
-# function dispatch table
-ldi = 0b10000010
-prn = 0b01000111
-hlt = 0b00000001
-mul = 0b10100010
-pop = 0b01000110
-push = 0b01000101
-
 class CPU:
     """Main CPU class."""
 
@@ -27,12 +19,15 @@ class CPU:
         self.reg[self.sp] = len(self.ram) - 12
         # initiate a branch table
         self.branchTable = {}
-        self.branchTable[ldi] = self.handle_ldi
-        self.branchTable[prn] = self.handle_prn
-        self.branchTable[hlt] = self.handle_hlt
-        self.branchTable[mul] = self.handle_mul
-        self.branchTable[pop] = self.handle_pop
-        self.branchTable[push] = self.handle_push
+        self.branchTable[0b10000010] = self.handle_ldi
+        self.branchTable[0b01000111] = self.handle_prn
+        self.branchTable[0b00000001] = self.handle_hlt
+        self.branchTable[0b10100010] = self.handle_mul
+        self.branchTable[0b01000110] = self.handle_pop
+        self.branchTable[0b01000101] = self.handle_push
+        self.branchTable[0b01010000] = self.handle_call
+        self.branchTable[0b00010001] = self.handle_ret
+        self.branchTable[0b10100000] = self.handle_add
         # set CPU running
         self.running = False
 
@@ -62,6 +57,9 @@ class CPU:
             for line in program:
                 # strip empty or hashes from program
                 line = line.split('#',1)[0].strip()
+                # if the line is empty, skip it
+                if line == '':
+                    continue
                 # add the line to the ram
                 self.ram[address] = int(f'0b{line}', 2)
                 # up the address variable for next loop
@@ -156,7 +154,41 @@ class CPU:
         self.reg[operand_a] = value
         # increment the Stack Pointer (SP)
         self.reg[self.sp] += 1
-        self.pc += 2        
+        self.pc += 2
+
+    # CALL: jump to a different part of the program, a defined subroutine
+    def handle_call(self, operand_a, operand_b):
+        # self.reg[self.sp] -= 1
+        # self.ram[self.reg[self.sp]] = self.pc + 2
+        # register = self.ram[self.pc + 1]
+        # reg_value = self.reg[register]
+        # self.pc = reg_value
+        # print(f'I got here to call function')
+        # get to the next line that would store the next line that needs to be ex
+        self.reg[self.sp] -= 1
+        # print(f'move stack pointer down')
+        self.ram_write(self.reg[self.sp], (self.pc + 2))
+        # print(f'write into ram the number(+2) after the program and register')
+        # set the PC to the value given after CALL was commanded
+        self.pc = self.reg[operand_a]
+        # print(f'set the program counter to the value from register provided under call')
+
+    # RET: PC is set to the subroutine return address
+    def handle_ret(self, operand_a, operand_b):
+        # return_value = self.ram[self.reg[self.sp]]
+        # self.reg[self.sp] += 1
+        # self.pc = return_value
+        # pop the current value from the stack
+        return_address = self.ram_read(self.reg[self.sp])
+        # increment the stack pointer (move back up the stack)
+        self.reg[self.sp] += 1
+        # set the PC to that value
+        self.pc = return_address
+
+    # ADD: get the sum of the two register values specified, save in the first
+    def handle_add(self, operand_a, operand_b):
+        self.alu("ADD", operand_a, operand_b)
+        self.pc += 3
 
     def run(self):
         # start the program
@@ -170,5 +202,7 @@ class CPU:
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
 
-            # run the next instruction from the dispatch table
-            self.branchTable[ir](operand_a, operand_b)
+            # if the operation is found in the operations dictionary
+            if ir in self.branchTable:
+                # run the next instruction from the dispatch table
+                self.branchTable[ir](operand_a, operand_b)
