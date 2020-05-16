@@ -2,6 +2,16 @@
 
 import sys
 
+# function dispatch table
+ldi = 0b10000010
+prn = 0b01000111
+hlt = 0b00000001
+mul = 0b10100010
+pop = 0b01000110
+push = 0b01000101
+call = 0b01010000
+ret = 0b00010001
+
 class CPU:
     """Main CPU class."""
 
@@ -188,11 +198,34 @@ class CPU:
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
 
+            if ir == ldi:
+                self.handle_ldi(operand_a, operand_b)
+            elif ir == prn:
+                self.handle_prn(operand_a, operand_b)
+            elif ir == hlt:
+                self.handle_hlt(operand_a, operand_b)
+            elif ir == mul:
+                self.handle_mul(operand_a, operand_b)
+            elif ir == pop:
+                self.handle_pop(operand_a, operand_b)
+            elif ir == push:
+                self.handle_push(operand_a, operand_b)
+            elif ir == call:
+                self.handle_call(operand_a, operand_b)
+            elif ir == ret:
+                self.handle_ret(operand_a, operand_b)
+
+            # if command is not recognized
+            else:
+                print(f'Unknown instruction register: {ir}')
+                # system crash
+                sys.exit(1)
+
             # if the operation is found in the operations dictionary
-            if ir in self.branchTable:
+            # if ir in self.branchTable:
                 # run the next instruction from the dispatch table
-                self.branchTable[ir](operand_a, operand_b)
+                # self.branchTable[ir](operand_a, operand_b)
 
             # if we have an operation that sets the PC directly
-            if ir == 0b01010000 or ir == 0b00010001:
-                print('you asked me to call or return')
+            # if ir == 0b01010000 or ir == 0b00010001:
+            #     print('progam is running call or return')
